@@ -1,0 +1,131 @@
+---
+title: "Introduction to targets"
+author: "Joel Nitta"
+institute: "University of Tokyo"
+date: "2022/01/04 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(targets)
+library(tarchetypes)
+```
+
+# What is {targets}?　{targets}とは？
+
+> The targets package is a **Make-like pipeline toolkit** for Statistics and data science **in R**. With targets, you can maintain a reproducible workflow without repeating yourself. targets learns how your pipeline fits together, **skips costly runtime** for tasks that are already up to date, runs only the necessary computation, **supports implicit parallel computing**, abstracts files as R objects, and **shows tangible evidence that the results match the underlying code and data**.
+
+- `make`と似たRのワークフロー管理パケージ
+
+- ワークフローの必要なところだけを走らせる
+
+- ワークフローを書く段階でパラレル化する
+
+- 計算結果がコードとデータと一致していることを証明する
+
+.footnote[https://books.ropensci.org/targets/]
+
+---
+## Resources 資料
+
+- Github https://github.com/ropensci/targets
+
+- Package website https://docs.ropensci.org/targets/
+
+- User manual https://books.ropensci.org/targets/
+
+- Targetopia https://wlandau.github.io/targetopia/
+
+- {tarchetypes} website https://docs.ropensci.org/tarchetypes/
+
+---
+class: inverse, center, middle
+
+# Live Coding
+
+---
+## Live Coding
+
+- `tar_script()`: ワークフロープランを書く
+
+- `tar_manifest()`: ワークフローを確認する（テキスト）
+
+- **`tar_visnetwork()`**: ワークフローロを確認する（画像）
+
+- **`tar_make()`**: ワークフローを実行する
+
+- **`tar_outdated()`**：次回走らせるところを予測する
+
+---
+class: inverse, center, middle
+
+# Advanced topics　上級編
+
+---
+## Branching パラレル化
+
+`tar_target()`の`pattern`関数を使う
+
+```{r, eval = FALSE, echo = TRUE}
+list(
+  tar_target(x, 1:2),
+  tar_target(y, 1:2),
+  tar_target(
+    dynamic, 
+    c(x, y),
+    pattern = map(x, y)
+  ),
+  tar_target(
+    dynamic_sum,
+    sum(dynamic),
+    pattern = map(dynamic))
+)
+```
+
+---
+## Branching パラレル化
+
+`tar_target()`の`pattern`関数を使う
+
+```{r, include = TRUE, echo = FALSE, eval = TRUE}
+tar_dir({
+  tar_script(
+    list(
+      tar_target(x, 1:2),
+      tar_target(y, 1:2),
+      tar_target(dynamic, c(x, y), pattern = map(x, y)),
+      tar_target(dynamic_sum, sum(dynamic), pattern = map(dynamic))
+    )
+  )
+  tar_make()
+  tar_read(dynamic_sum)
+}
+)
+```
+
+---
+## Amazon S3 storage
+
+https://books.ropensci.org/targets/storage_amazon.html
+
+---
+## External files
+
+---
+## Maintaining the environment
+
+---
+## markdown-targets
+
+---
+## Recommended workflow
+
+
+
