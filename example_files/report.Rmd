@@ -1,0 +1,31 @@
+---
+title: "Report"
+author: "Joel Nitta"
+date: "1/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggplot2)
+```
+
+```{r load-data}
+tar_load(data)
+tar_load(summary)
+```
+
+## Methods
+
+I generated a random dataset (Fig 1).
+
+## Results
+
+The mean of the x-value in the dataset is `r summary$mean_x`.
+
+## Figures
+
+```{r raw-data, fig.cap = "Fig 1. A random dataset"}
+ggplot(data, aes(x = x, y = y)) + geom_point()
+```
+
