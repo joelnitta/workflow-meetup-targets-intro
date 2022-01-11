@@ -1,11 +1,12 @@
 ---
-title: "Introduction to targets"
+title: "Introduction to {targets}"
 author: "Joel Nitta"
 institute: "University of Tokyo"
-date: "2022/01/04 (updated: `r Sys.Date()`)"
+date: "2022-01-12"
 output:
   xaringan::moon_reader:
     lib_dir: libs
+    css: xaringan-themer.css
     nature:
       highlightStyle: github
       highlightLines: true
@@ -16,21 +17,57 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 library(targets)
 library(tarchetypes)
+library(xaringanthemer)
 ```
 
-# What is {targets}?　{targets}とは？
+## 自己紹介
 
-> The targets package is a **Make-like pipeline toolkit** for Statistics and data science **in R**. With targets, you can maintain a reproducible workflow without repeating yourself. targets learns how your pipeline fits together, **skips costly runtime** for tasks that are already up to date, runs only the necessary computation, **supports implicit parallel computing**, abstracts files as R objects, and **shows tangible evidence that the results match the underlying code and data**.
+.pull-left[
+**ニッタ （新田）ジョエル**
 
-- `make`と似たRのワークフロー管理パケージ
+@joel_nitta
 
-- ワークフローの必要なところだけを走らせる
+https://joelnitta.com
 
-- ワークフローを書く段階でパラレル化する
+- [東京大学岩崎研究室](http://iwasakilab.k.u-tokyo.ac.jp/)
+
+- 特任助教
+
+- 研究テーマ：シダ植物の<br>進化、生態学
+
+- 趣味：マラソン
+]
+
+.pull-right[
+<img src="https://github.com/joelnitta/joelnitta-site/blob/master/static/media/headers/research_img2.jpg?raw=true" alt="drawing" height="400"/>
+]
+
+---
+## アウトライン
+
+- {targets}の簡単な紹介
+
+- ライブコーディング（その１）
+
+- 上級編
+
+- ライブコーディング（その２）
+
+↑ 先に`targets_vcf_example`のセットアップを行う
+
+https://github.com/joelnitta/targets_vcf_example
+
+---
+
+## {targets}とは？
+
+- `make`やCWLと似たRの**ワークフロー管理パケージ**
+
+- ワークフローの**必要なところだけを走らせる**
+
+- ワークフローを書く段階で**パラレル化する**
 
 - 計算結果がコードとデータと一致していることを証明する
-
-.footnote[https://books.ropensci.org/targets/]
 
 ---
 ## Resources 資料
@@ -45,23 +82,25 @@ library(tarchetypes)
 
 - {tarchetypes} website https://docs.ropensci.org/tarchetypes/
 
----
-class: inverse, center, middle
-
-# Live Coding
+- [@u_ribo](https://twitter.com/u_ribo)さんの[発表](https://speakerdeck.com/s_uryu/workflow-management-with-targets)
 
 ---
 ## Live Coding
 
 - `tar_script()`: ワークフロープランを書く
 
-- `tar_manifest()`: ワークフローを確認する（テキスト）
+- `tar_visnetwork()`: ワークフローロを確認する
 
-- **`tar_visnetwork()`**: ワークフローロを確認する（画像）
+- `tar_make()`: ワークフローを実行する
 
-- **`tar_make()`**: ワークフローを実行する
+- `tar_load()`: ターゲットを読み込む
 
-- **`tar_outdated()`**：次回走らせるところを予測する
+- `tar_outdated()`：次回走らせるところを予測する
+
+---
+class: inverse, center, middle
+
+# Live Coding
 
 ---
 class: inverse, center, middle
@@ -69,7 +108,7 @@ class: inverse, center, middle
 # Advanced topics　上級編
 
 ---
-## Branching パラレル化
+## Branching: 一気に複数のターゲットを指定する
 
 `tar_target()`の`pattern`関数を使う
 
@@ -90,7 +129,7 @@ list(
 ```
 
 ---
-## Branching パラレル化
+## Branching: 一気に複数のターゲットを指定する
 
 `tar_target()`の`pattern`関数を使う
 
@@ -111,21 +150,80 @@ tar_dir({
 ```
 
 ---
+## HPC・パラレル化
+
+ローカルで複数コアを使う場合は`_targets.R`に以下を加える：
+
+```{r future-code, eval = FALSE, echo = TRUE}
+# 並列分散処理のパケージ
+library(future)
+library(future.callr)
+
+# 並列バックエンドを設定する
+plan(callr)
+```
+
+そして、このようなコードで実行させる：
+
+```{r future-code-make, eval = FALSE, echo = TRUE}
+tar_make_future(workers = 4) # 例えば、四つのプロセスを同時に走らせる
+```
+
+ブランチ（`tar_target(..., pattern = map(...))`によって設定されたターゲット）が自動的に並列に処理される！
+
+---
+## HPC・パラレル化
+
+サーバーで使う場合：[{clustermq}](https://github.com/mschubert/clustermq)を使う
+
+https://books.ropensci.org/targets/hpc.html#clustermq-remotely
+
+---
 ## Amazon S3 storage
+
+cloudの上に`_targets/`を置くことができるらしい
 
 https://books.ropensci.org/targets/storage_amazon.html
 
 ---
-## External files
-
----
-## Maintaining the environment
-
----
 ## markdown-targets
 
+`_targets.R`をいじらないで、全てRmarkdownで動かすことができる<br>らしい
+
+https://books.ropensci.org/targets/markdown.html
+
 ---
-## Recommended workflow
+## External files
 
+`tarchetypes::tar_file()`を使う
 
+```{r, eval = FALSE, echo = TRUE}
+list(
+  tar_file(
+    data_file,
+    "data/some_data.csv" # ファイルのハッシュ値を計算する
+  ),
+  tar_target(
+    data,
+    read_csv(data_file)
+  )
+)
+```
 
+生データ`data/some_data.csv`をいじると、targetsが感知して、また下流のターゲットを作り直す
+
+---
+## Bioinformatics workflows
+
+condaとdocker（あるいはsingularity）を使って、完全に再現可能なワークフローにする
+
+- `tar_file()`を連続させることによってワークフローの<br>インプット・アウトプットの関係を作っていく
+
+https://www.joelnitta.com/posts/2021-11-16_r-bioinfo-flow/
+
+https://github.com/joelnitta/targets_vcf_example
+
+---
+class: inverse, center, middle
+
+# Live Coding

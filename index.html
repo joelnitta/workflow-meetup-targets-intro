@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Introduction to {targets}</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Joel Nitta" />
+    <meta name="date" content="2022-01-12" />
+    <script src="libs/header-attrs-2.11/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Introduction to {targets}
+### Joel Nitta
+### University of Tokyo
+### 2022-01-12
+
+---
+
+
+
+
+## 自己紹介
+
+.pull-left[
+**ニッタ （新田）ジョエル**
+
+@joel_nitta
+
+https://joelnitta.com
+
+- [東京大学岩崎研究室](http://iwasakilab.k.u-tokyo.ac.jp/)
+
+- 特任助教
+
+- 研究テーマ：シダ植物の&lt;br&gt;進化、生態学
+
+- 趣味：マラソン
+]
+
+.pull-right[
+&lt;img src="https://github.com/joelnitta/joelnitta-site/blob/master/static/media/headers/research_img2.jpg?raw=true" alt="drawing" height="400"/&gt;
+]
+
+---
+## アウトライン
+
+- {targets}の簡単な紹介
+
+- ライブコーディング（その１）
+
+- 上級編
+
+- ライブコーディング（その２）
+
+↑ 先に`targets_vcf_example`のセットアップを行う
+
+https://github.com/joelnitta/targets_vcf_example
+
+---
+
+## {targets}とは？
+
+- `make`やCWLと似たRの**ワークフロー管理パケージ**
+
+- ワークフローの**必要なところだけを走らせる**
+
+- ワークフローを書く段階で**パラレル化する**
+
+- 計算結果がコードとデータと一致していることを証明する
+
+---
+## Resources 資料
+
+- Github https://github.com/ropensci/targets
+
+- Package website https://docs.ropensci.org/targets/
+
+- User manual https://books.ropensci.org/targets/
+
+- Targetopia https://wlandau.github.io/targetopia/
+
+- {tarchetypes} website https://docs.ropensci.org/tarchetypes/
+
+- [@u_ribo](https://twitter.com/u_ribo)さんの[発表](https://speakerdeck.com/s_uryu/workflow-management-with-targets)
+
+---
+## Live Coding
+
+- `tar_script()`: ワークフロープランを書く
+
+- `tar_visnetwork()`: ワークフローロを確認する
+
+- `tar_make()`: ワークフローを実行する
+
+- `tar_load()`: ターゲットを読み込む
+
+- `tar_outdated()`：次回走らせるところを予測する
+
+---
+class: inverse, center, middle
+
+# Live Coding
+
+---
+class: inverse, center, middle
+
+# Advanced topics　上級編
+
+---
+## Branching: 一気に複数のターゲットを指定する
+
+`tar_target()`の`pattern`関数を使う
+
+
+```r
+list(
+  tar_target(x, 1:2),
+  tar_target(y, 1:2),
+  tar_target(
+    dynamic, 
+    c(x, y),
+    pattern = map(x, y)
+  ),
+  tar_target(
+    dynamic_sum,
+    sum(dynamic),
+    pattern = map(dynamic))
+)
+```
+
+---
+## Branching: 一気に複数のターゲットを指定する
+
+`tar_target()`の`pattern`関数を使う
+
+
+```
+## • start target x
+## • built target x
+## • start target y
+## • built target y
+## • start branch dynamic_b041b2ac
+## • built branch dynamic_b041b2ac
+## • start branch dynamic_0cc701f3
+## • built branch dynamic_0cc701f3
+## • built pattern dynamic
+## • start branch dynamic_sum_8da5a5fc
+## • built branch dynamic_sum_8da5a5fc
+## • start branch dynamic_sum_e073cbae
+## • built branch dynamic_sum_e073cbae
+## • built pattern dynamic_sum
+## • end pipeline
+```
+
+```
+## dynamic_sum_8da5a5fc dynamic_sum_e073cbae 
+##                    2                    4
+```
+
+---
+## HPC・パラレル化
+
+ローカルで複数コアを使う場合は`_targets.R`に以下を加える：
+
+
+```r
+# 並列分散処理のパケージ
+library(future)
+library(future.callr)
+
+# 並列バックエンドを設定する
+plan(callr)
+```
+
+そして、このようなコードで実行させる：
+
+
+```r
+tar_make_future(workers = 4) # 例えば、四つのプロセスを同時に走らせる
+```
+
+ブランチ（`tar_target(..., pattern = map(...))`によって設定されたターゲット）が自動的に並列に処理される！
+
+---
+## HPC・パラレル化
+
+サーバーで使う場合：[{clustermq}](https://github.com/mschubert/clustermq)を使う
+
+https://books.ropensci.org/targets/hpc.html#clustermq-remotely
+
+---
+## Amazon S3 storage
+
+cloudの上に`_targets/`を置くことができるらしい
+
+https://books.ropensci.org/targets/storage_amazon.html
+
+---
+## markdown-targets
+
+`_targets.R`をいじらないで、全てRmarkdownで動かすことができる&lt;br&gt;らしい
+
+https://books.ropensci.org/targets/markdown.html
+
+---
+## External files
+
+`tarchetypes::tar_file()`を使う
+
+
+```r
+list(
+  tar_file(
+    data_file,
+    "data/some_data.csv" # ファイルのハッシュ値を計算する
+  ),
+  tar_target(
+    data,
+    read_csv(data_file)
+  )
+)
+```
+
+生データ`data/some_data.csv`をいじると、targetsが感知して、また下流のターゲットを作り直す
+
+---
+## Bioinformatics workflows
+
+condaとdocker（あるいはsingularity）を使って、完全に再現可能なワークフローにする
+
+- `tar_file()`を連続させることによってワークフローの&lt;br&gt;インプット・アウトプットの関係を作っていく
+
+https://www.joelnitta.com/posts/2021-11-16_r-bioinfo-flow/
+
+https://github.com/joelnitta/targets_vcf_example
+
+---
+class: inverse, center, middle
+
+# Live Coding
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
