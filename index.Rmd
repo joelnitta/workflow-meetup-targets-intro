@@ -224,6 +224,26 @@ https://www.joelnitta.com/posts/2021-11-16_r-bioinfo-flow/
 https://github.com/joelnitta/targets_vcf_example
 
 ---
+## Bioinformatics workflows
+
+私の`run_docker()`（主に`babelwhale::run()`を使っている）を<br>使えば、簡単にコマンドを包める（wrapする）
+
+例えば、`bwa mem`
+
+```{r, eval = FALSE, echo = TRUE}
+run_docker(
+    container_id = "quay.io/biocontainers/bwa:0.7.8--hed695b0_5",
+    command = "bwa",
+    args = c(
+      "mem",
+      file = "data/ref/ref.fasta", # volumeの指定要らず！
+      file = "data/reads/read_1.fasta",
+      file = "data/reads/read_2.fasta"),
+    stdout = "results/aligned_reads.sam"
+  )
+```
+
+---
 class: inverse, center, middle
 
 # Live Coding
