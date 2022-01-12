@@ -118,6 +118,27 @@ class: inverse, center, middle
 # Advanced topics　上級編
 
 ---
+## Amazon S3 storage
+
+cloudの上に`_targets/`を置くことができるらしい
+
+https://books.ropensci.org/targets/storage_amazon.html
+
+---
+## GH Actions
+
+パイプラインの実行をgithub actionsに任せることができるらしい
+
+https://docs.ropensci.org/targets/reference/tar_github_actions.html
+
+---
+## markdown-targets
+
+`_targets.R`をいじらないで、全てRmarkdownで動かすことができる&lt;br&gt;らしい
+
+https://books.ropensci.org/targets/markdown.html
+
+---
 ## Branching: 一気に複数のターゲットを指定する
 
 `tar_target()`の`pattern`関数を使う
@@ -142,7 +163,10 @@ list(
 ---
 ## Branching: 一気に複数のターゲットを指定する
 
-`tar_target()`の`pattern`関数を使う
+
+```r
+tar_make()
+```
 
 
 ```
@@ -174,11 +198,15 @@ list(
 ## Branching: 一気に複数のターゲットを指定する
 
 
+```r
+tar_read(mean_val)
+```
+
+
 ```
 ## mean_val_6f3bc7ea mean_val_7dfbcf2a mean_val_73aee7e9 
 ##         0.3007010         0.4023032         0.4935173
 ```
-
 
 ---
 ## HPC・パラレル化
@@ -210,27 +238,6 @@ tar_make_future(workers = 4) # 例えば、四つのプロセスを同時に走�
 サーバーで使う場合：[{clustermq}](https://github.com/mschubert/clustermq)を使う
 
 https://books.ropensci.org/targets/hpc.html#clustermq-remotely
-
----
-## Amazon S3 storage
-
-cloudの上に`_targets/`を置くことができるらしい
-
-https://books.ropensci.org/targets/storage_amazon.html
-
----
-## GH Actions
-
-パイプラインの実行をgithub actionsに任せることができるらしい
-
-https://docs.ropensci.org/targets/reference/tar_github_actions.html
-
----
-## markdown-targets
-
-`_targets.R`をいじらないで、全てRmarkdownで動かすことができる&lt;br&gt;らしい
-
-https://books.ropensci.org/targets/markdown.html
 
 ---
 ## External files
