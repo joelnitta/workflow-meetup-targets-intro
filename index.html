@@ -10,17 +10,21 @@
   </head>
   <body>
     <textarea id="source">
-class: center, middle, inverse, title-slide
 
-# Introduction to {targets}
-### Joel Nitta
-### University of Tokyo
-### 2022-01-12
+
+
+
+## Introduction to {targets}
+
+**ニッタ ジョエル**
+
+Workflow Meetup &lt;span style = 'font-size: 120%;'&gt;2022/01/12&lt;/span&gt;
+
+&lt;br&gt;&lt;br&gt;&lt;img src="https://docs.ropensci.org/targets/logo.svg" alt="drawing" height="350" style="float:right;margin:-200px 0px"&gt;
+
+&lt;br&gt;&lt;br&gt;https://joelnitta.com
 
 ---
-
-
-
 
 ## 自己紹介
 
@@ -63,13 +67,17 @@ https://github.com/joelnitta/targets_vcf_example
 
 ## {targets}とは？
 
-- `make`やCWLと似たRの**ワークフロー管理パケージ**
+.pull-left[
+- Rの**ワークフロー管理パケージ**
 
 - ワークフローの**必要なところだけを走らせる**
 
-- ワークフローを書く段階で**パラレル化する**
+- ワークフローを書く段階で&lt;br&gt;**パラレル化する**
 
 - 計算結果がコードとデータと一致していることを証明する
+]
+
+&lt;img src="https://docs.ropensci.org/targets/logo.svg" alt="drawing" height="350" style="float:right"&gt;
 
 ---
 ## Resources 資料
@@ -117,17 +125,17 @@ class: inverse, center, middle
 
 ```r
 list(
-  tar_target(x, 1:2),
-  tar_target(y, 1:2),
+  tar_target(num_obs, c(5, 10, 1000)),
   tar_target(
-    dynamic, 
-    c(x, y),
-    pattern = map(x, y)
+    rand_dat,
+    runif(num_obs),
+    pattern = map(num_obs)
   ),
   tar_target(
-    dynamic_sum,
-    sum(dynamic),
-    pattern = map(dynamic))
+    mean_val,
+    mean(rand_dat),
+    pattern = map(rand_dat)
+  )
 )
 ```
 
@@ -138,27 +146,39 @@ list(
 
 
 ```
-## • start target x
-## • built target x
-## • start target y
-## • built target y
-## • start branch dynamic_b041b2ac
-## • built branch dynamic_b041b2ac
-## • start branch dynamic_0cc701f3
-## • built branch dynamic_0cc701f3
-## • built pattern dynamic
-## • start branch dynamic_sum_8da5a5fc
-## • built branch dynamic_sum_8da5a5fc
-## • start branch dynamic_sum_e073cbae
-## • built branch dynamic_sum_e073cbae
-## • built pattern dynamic_sum
+## • start target num_obs
+## • built target num_obs
+## • start branch rand_dat_63209a1b
+## • built branch rand_dat_63209a1b
+## • start branch rand_dat_92aebc0d
+## • built branch rand_dat_92aebc0d
+## • start branch rand_dat_d9be0f3e
+## • built branch rand_dat_d9be0f3e
+## • built pattern rand_dat
+## • start branch mean_val_6f3bc7ea
+## • built branch mean_val_6f3bc7ea
+## • start branch mean_val_7dfbcf2a
+## • built branch mean_val_7dfbcf2a
+## • start branch mean_val_73aee7e9
+## • built branch mean_val_73aee7e9
+## • built pattern mean_val
 ## • end pipeline
 ```
 
 ```
-## dynamic_sum_8da5a5fc dynamic_sum_e073cbae 
-##                    2                    4
+## mean_val_6f3bc7ea mean_val_7dfbcf2a mean_val_73aee7e9 
+##         0.3007010         0.4023032         0.4935173
 ```
+
+---
+## Branching: 一気に複数のターゲットを指定する
+
+
+```
+## mean_val_6f3bc7ea mean_val_7dfbcf2a mean_val_73aee7e9 
+##         0.3007010         0.4023032         0.4935173
+```
+
 
 ---
 ## HPC・パラレル化
@@ -197,6 +217,13 @@ https://books.ropensci.org/targets/hpc.html#clustermq-remotely
 cloudの上に`_targets/`を置くことができるらしい
 
 https://books.ropensci.org/targets/storage_amazon.html
+
+---
+## GH Actions
+
+パイプラインの実行をgithub actionsに任せることができるらしい
+
+https://docs.ropensci.org/targets/reference/tar_github_actions.html
 
 ---
 ## markdown-targets
@@ -247,15 +274,15 @@ https://github.com/joelnitta/targets_vcf_example
 
 ```r
 run_docker(
-    container_id = "quay.io/biocontainers/bwa:0.7.8--hed695b0_5",
-    command = "bwa",
-    args = c(
-      "mem",
-      file = "data/ref/ref.fasta", # volumeの指定要らず！
-      file = "data/reads/read_1.fasta",
-      file = "data/reads/read_2.fasta"),
-    stdout = "results/aligned_reads.sam"
-  )
+  container_id = "quay.io/biocontainers/bwa:0.7.8--hed695b0_5",
+  command = "bwa",
+  args = c(
+    "mem",
+    file = "data/ref/ref.fasta", # volumeの指定要らず！
+    file = "data/reads/read_1.fasta",
+    file = "data/reads/read_2.fasta"),
+  stdout = "results/aligned_reads.sam"
+)
 ```
 
 ---

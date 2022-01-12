@@ -7,6 +7,7 @@ output:
   xaringan::moon_reader:
     lib_dir: libs
     css: xaringan-themer.css
+    seal: false
     nature:
       highlightStyle: github
       highlightLines: true
@@ -19,6 +20,18 @@ library(targets)
 library(tarchetypes)
 library(xaringanthemer)
 ```
+
+## Introduction to {targets}
+
+**ニッタ ジョエル**
+
+Workflow Meetup <span style = 'font-size: 120%;'>2022/01/12</span>
+
+<br><br><img src="https://docs.ropensci.org/targets/logo.svg" alt="drawing" height="350" style="float:right;margin:-200px 0px">
+
+<br><br>https://joelnitta.com
+
+---
 
 ## 自己紹介
 
@@ -61,13 +74,17 @@ https://github.com/joelnitta/targets_vcf_example
 
 ## {targets}とは？
 
-- `make`やCWLと似たRの**ワークフロー管理パケージ**
+.pull-left[
+- Rの**ワークフロー管理パケージ**
 
 - ワークフローの**必要なところだけを走らせる**
 
-- ワークフローを書く段階で**パラレル化する**
+- ワークフローを書く段階で<br>**パラレル化する**
 
 - 計算結果がコードとデータと一致していることを証明する
+]
+
+<img src="https://docs.ropensci.org/targets/logo.svg" alt="drawing" height="350" style="float:right">
 
 ---
 ## Resources 資料
@@ -114,17 +131,17 @@ class: inverse, center, middle
 
 ```{r, eval = FALSE, echo = TRUE}
 list(
-  tar_target(x, 1:2),
-  tar_target(y, 1:2),
+  tar_target(num_obs, c(5, 10, 1000)),
   tar_target(
-    dynamic, 
-    c(x, y),
-    pattern = map(x, y)
+    rand_dat,
+    runif(num_obs),
+    pattern = map(num_obs)
   ),
   tar_target(
-    dynamic_sum,
-    sum(dynamic),
-    pattern = map(dynamic))
+    mean_val,
+    mean(rand_dat),
+    pattern = map(rand_dat)
+  )
 )
 ```
 
@@ -137,17 +154,51 @@ list(
 tar_dir({
   tar_script(
     list(
-      tar_target(x, 1:2),
-      tar_target(y, 1:2),
-      tar_target(dynamic, c(x, y), pattern = map(x, y)),
-      tar_target(dynamic_sum, sum(dynamic), pattern = map(dynamic))
+      tar_target(num_obs, c(5, 10, 1000)),
+      tar_target(
+        rand_dat,
+        runif(num_obs),
+        pattern = map(num_obs)
+      ),
+      tar_target(
+        mean_val,
+        mean(rand_dat),
+        pattern = map(rand_dat)
+      )
     )
   )
   tar_make()
-  tar_read(dynamic_sum)
+  tar_read(mean_val)
 }
 )
 ```
+
+---
+## Branching: 一気に複数のターゲットを指定する
+
+```{r, include = TRUE, echo = FALSE, eval = TRUE}
+tar_dir({
+  tar_script(
+    list(
+      tar_target(num_obs, c(5, 10, 1000)),
+      tar_target(
+        rand_dat,
+        runif(num_obs),
+        pattern = map(num_obs)
+      ),
+      tar_target(
+        mean_val,
+        mean(rand_dat),
+        pattern = map(rand_dat)
+      )
+    )
+  )
+  tar_make(reporter = "silent")
+  tar_read(mean_val)
+}
+)
+```
+
 
 ---
 ## HPC・パラレル化
@@ -184,6 +235,13 @@ https://books.ropensci.org/targets/hpc.html#clustermq-remotely
 cloudの上に`_targets/`を置くことができるらしい
 
 https://books.ropensci.org/targets/storage_amazon.html
+
+---
+## GH Actions
+
+パイプラインの実行をgithub actionsに任せることができるらしい
+
+https://docs.ropensci.org/targets/reference/tar_github_actions.html
 
 ---
 ## markdown-targets
@@ -232,15 +290,15 @@ https://github.com/joelnitta/targets_vcf_example
 
 ```{r, eval = FALSE, echo = TRUE}
 run_docker(
-    container_id = "quay.io/biocontainers/bwa:0.7.8--hed695b0_5",
-    command = "bwa",
-    args = c(
-      "mem",
-      file = "data/ref/ref.fasta", # volumeの指定要らず！
-      file = "data/reads/read_1.fasta",
-      file = "data/reads/read_2.fasta"),
-    stdout = "results/aligned_reads.sam"
-  )
+  container_id = "quay.io/biocontainers/bwa:0.7.8--hed695b0_5",
+  command = "bwa",
+  args = c(
+    "mem",
+    file = "data/ref/ref.fasta", # volumeの指定要らず！
+    file = "data/reads/read_1.fasta",
+    file = "data/reads/read_2.fasta"),
+  stdout = "results/aligned_reads.sam"
+)
 ```
 
 ---
